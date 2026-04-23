@@ -1,0 +1,511 @@
+--- INICIO ARQUIVO: metadata.json ---
+{
+"name": "Gestão de Estoque Inteligente",
+"description": "Análise simplificada de estoque e giro de capital para pequenos negócios.",
+"requestFramePermissions": [],
+"majorCapabilities": []
+}
+--- FIM ARQUIVO: metadata.json ---
+
+--- INICIO ARQUIVO: .env.example ---
+# GEMINI_API_KEY: Required for Gemini AI API calls.
+# AI Studio automatically injects this at runtime from user secrets.
+# Users configure this via the Secrets panel in the AI Studio UI.
+GEMINI_API_KEY="MY_GEMINI_API_KEY"
+# APP_URL: The URL where this applet is hosted.
+# AI Studio automatically injects this at runtime with the Cloud Run service URL.
+# Used for self-referential links, OAuth callbacks, and API endpoints.
+APP_URL="MY_APP_URL"
+--- FIM ARQUIVO: .env.example ---
+
+--- INICIO ARQUIVO: index.html ---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Google AI Studio App</title>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
+--- FIM ARQUIVO: index.html ---
+
+--- INICIO ARQUIVO: .gitignore ---
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+--- FIM ARQUIVO: .gitignore ---
+
+--- INICIO ARQUIVO: tsconfig.json ---
+{
+"compilerOptions": {
+"target": "ES2022",
+"experimentalDecorators": true,
+"useDefineForClassFields": false,
+"module": "ESNext",
+"lib": [
+"ES2022",
+"DOM",
+"DOM.Iterable"
+],
+"skipLibCheck": true,
+"moduleResolution": "bundler",
+"isolatedModules": true,
+"moduleDetection": "force",
+"allowJs": true,
+"jsx": "react-jsx",
+"paths": {
+"@/*": [
+"./*"
+]
+},
+"allowImportingTsExtensions": true,
+"noEmit": true
+}
+}
+--- FIM ARQUIVO: tsconfig.json ---
+
+--- INICIO ARQUIVO: package.json ---
+{
+"name": "react-example",
+"private": true,
+"version": "0.0.0",
+"type": "module",
+"scripts": {
+"dev": "vite --port=3000 --host=0.0.0.0",
+"build": "vite build",
+"preview": "vite preview",
+"clean": "rm -rf dist",
+"lint": "tsc --noEmit"
+},
+"dependencies": {
+"@google/genai": "^1.29.0",
+"@tailwindcss/vite": "^4.1.14",
+"@vitejs/plugin-react": "^5.0.4",
+"lucide-react": "^0.546.0",
+"react": "^19.0.0",
+"react-dom": "^19.0.0",
+"vite": "^6.2.0",
+"express": "^4.21.2",
+"dotenv": "^17.2.3",
+"motion": "^12.23.24"
+},
+"devDependencies": {
+"@types/node": "^22.14.0",
+"autoprefixer": "^10.4.21",
+"tailwindcss": "^4.1.14",
+"tsx": "^4.21.0",
+"typescript": "~5.8.2",
+"vite": "^6.2.0",
+"@types/express": "^4.17.21"
+}
+}
+--- FIM ARQUIVO: package.json ---
+
+--- INICIO ARQUIVO: vite.config.ts ---
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import {defineConfig, loadEnv} from 'vite';
+export default defineConfig(({mode}) => {
+const env = loadEnv(mode, '.', '');
+return {
+plugins: [react(), tailwindcss()],
+define: {
+'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+},
+resolve: {
+alias: {
+'@': path.resolve(__dirname, '.'),
+},
+},
+server: {
+// HMR is disabled in AI Studio via DISABLE_HMR env var.
+// Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+hmr: process.env.DISABLE_HMR !== 'true',
+},
+};
+});
+--- FIM ARQUIVO: vite.config.ts ---
+
+--- INICIO ARQUIVO: package-lock.json ---
+
+--- FIM ARQUIVO: package-lock.json ---
+
+--- INICIO ARQUIVO: README.md ---
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
+# Run and deploy your AI Studio app
+This contains everything you need to run your app locally.
+View your app in AI Studio: https://ai.studio/apps/5f3a6df2-8265-46f7-aab3-6a4efd6469a4
+## Run Locally
+**Prerequisites:**  Node.js
+1. Install dependencies:
+`npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+`npm run dev`
+--- FIM ARQUIVO: README.md ---
+
+--- INICIO ARQUIVO: src/App.tsx ---
+/**
+* @license
+* SPDX-License-Identifier: Apache-2.0
+*/
+import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+Package,
+TrendingUp,
+TrendingDown,
+DollarSign,
+Plus,
+Trash2,
+AlertCircle,
+ArrowRight,
+PieChart
+} from 'lucide-react';
+interface Product {
+id: string;
+name: string;
+purchasePrice: number;
+sellingPrice: number;
+stock: number;
+weeklySales: number;
+}
+export default function App() {
+const [products, setProducts] = useState<Product[]>([]);
+const [formData, setFormData] = useState({
+name: '',
+purchasePrice: '',
+sellingPrice: '',
+stock: '',
+weeklySales: ''
+});
+const handleAddField = (e: React.FormEvent) => {
+e.preventDefault();
+if (!formData.name || !formData.purchasePrice || !formData.sellingPrice || !formData.stock || !formData.weeklySales) return;
+const newProduct: Product = {
+id: crypto.randomUUID(),
+name: formData.name,
+purchasePrice: Number(formData.purchasePrice),
+sellingPrice: Number(formData.sellingPrice),
+stock: Number(formData.stock),
+weeklySales: Number(formData.weeklySales)
+};
+setProducts([...products, newProduct]);
+setFormData({
+name: '',
+purchasePrice: '',
+sellingPrice: '',
+stock: '',
+weeklySales: ''
+});
+};
+const removeProduct = (id: string) => {
+setProducts(products.filter(p => p.id !== id));
+};
+const analysis = useMemo(() => {
+if (products.length === 0) return null;
+const trappedMoney = products.reduce((acc, p) => acc + (p.stock * p.purchasePrice), 0);
+const lowTurnover = products.filter(p => (p.stock / p.weeklySales) > 4);
+const highTurnover = products.filter(p => (p.stock / p.weeklySales) <= 4);
+// Sorting to find extreme examples
+const worstProduct = [...products].sort((a, b) => (b.stock / b.weeklySales) - (a.stock / a.weeklySales))[0];
+const bestProduct = [...products].sort((a, b) => (a.stock / a.weeklySales) - (b.stock / b.weeklySales))[0];
+// Simple analysis sentences (max 3)
+let sentence1 = `Você tem R$ ${trappedMoney.toFixed(2)} em mercadoria parada no estoque agora.`;
+let sentence2 = `${worstProduct.name} está travando seu capital com baixo giro.`;
+let sentence3 = `O produto ${bestProduct.name} está vendendo bem e merece atenção no estoque.`;
+if (trappedMoney === 0) {
+sentence1 = "Seu estoque está vazio no momento.";
+sentence2 = "Adicione produtos para começar a análise.";
+sentence3 = "";
+}
+return {
+trappedMoney,
+lowTurnover,
+highTurnover,
+worstProduct,
+bestProduct,
+sentences: [sentence1, sentence2, sentence3].filter(s => s !== "")
+};
+}, [products]);
+return (
+<div className="min-h-screen bg-[#f8f9fa] text-slate-900 font-sans p-6 md:p-12">
+<div className="max-w-4xl mx-auto space-y-8">
+{/* Header */}
+<header className="space-y-2">
+<div className="flex items-center gap-3">
+<div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100">
+<PieChart className="w-6 h-6 text-white" />
+</div>
+<h1 className="text-2xl font-bold tracking-tight text-slate-800">Analista de Estoque</h1>
+</div>
+<p className="text-slate-500">Transforme seus números em lucro e capital livre.</p>
+</header>
+<div className="grid md:grid-cols-[1fr_350px] gap-8">
+{/* Main Content */}
+<div className="space-y-8">
+{/* Analysis Summary */}
+<AnimatePresence mode="wait">
+{analysis ? (
+<motion.div
+initial={{ opacity: 0, y: 20 }}
+animate={{ opacity: 1, y: 0 }}
+exit={{ opacity: 0, y: -20 }}
+className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4"
+>
+<div className="flex items-center justify-between">
+<h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Diagnóstico Direto</h2>
+<span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-green-50 text-green-700 rounded-full">
+<AlertCircle className="w-3 h-3" />
+Análise Real
+</span>
+</div>
+<div className="space-y-3">
+{analysis.sentences.map((s, i) => (
+<p key={i} className="text-lg font-medium text-slate-700 leading-snug">
+{s}
+</p>
+))}
+</div>
+<div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div className="p-4 bg-red-50 rounded-xl border border-red-100 space-y-1">
+<p className="text-xs font-semibold text-red-600 uppercase tracking-wide">Ação Corretiva</p>
+<p className="text-sm text-red-800">Reduzir compra ou fazer promoção de {analysis.worstProduct.name}.</p>
+</div>
+<div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 space-y-1">
+<p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Ação Estratégica</p>
+<p className="text-sm text-indigo-800">Reforçar estoque de {analysis.bestProduct.name} para não faltar.</p>
+</div>
+</div>
+</motion.div>
+) : (
+<motion.div
+initial={{ opacity: 0 }}
+animate={{ opacity: 1 }}
+className="bg-slate-100 border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center space-y-4"
+>
+<div className="mx-auto w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center">
+<Package className="w-6 h-6 text-slate-400" />
+</div>
+<div>
+<h3 className="font-semibold text-slate-600">Nenhum dado ainda</h3>
+<p className="text-sm text-slate-500">Adicione seus produtos ao lado para ver o diagnóstico.</p>
+</div>
+</motion.div>
+)}
+</AnimatePresence>
+{/* List Table */}
+{products.length > 0 && (
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+<div className="p-4 border-b border-slate-100 flex items-center justify-between">
+<h2 className="font-semibold text-slate-700">Seu Inventário</h2>
+<span className="text-xs text-slate-400">{products.length} itens</span>
+</div>
+<div className="overflow-x-auto">
+<table className="w-full text-left border-collapse">
+<thead>
+<tr className="bg-slate-50/50 text-xs font-semibold uppercase text-slate-400 tracking-wider">
+<th className="px-6 py-3">Produto</th>
+<th className="px-6 py-3 text-right">Estoque</th>
+<th className="px-6 py-3 text-right">Média/Sem</th>
+<th className="px-6 py-3 text-right">Giro</th>
+<th className="px-6 py-3 w-10"></th>
+</tr>
+</thead>
+<tbody className="divide-y divide-slate-100">
+{products.map((p) => {
+const weeksOfStock = p.stock / p.weeklySales;
+const isLowTurnover = weeksOfStock > 4;
+return (
+<tr key={p.id} className="group hover:bg-slate-50 transition-colors">
+<td className="px-6 py-4">
+<p className="font-medium text-slate-800">{p.name}</p>
+<p className="text-[10px] text-slate-400">Custo: R$ {p.purchasePrice.toFixed(2)}</p>
+</td>
+<td className="px-6 py-4 text-right text-sm font-medium text-slate-600">
+{p.stock}
+</td>
+<td className="px-6 py-4 text-right text-sm text-slate-500">
+{p.weeklySales}
+</td>
+<td className="px-6 py-4 text-right">
+<span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+isLowTurnover
+? 'bg-orange-50 text-orange-600'
+: 'bg-green-50 text-green-600'
+}`}>
+{isLowTurnover ? <TrendingDown size={10} /> : <TrendingUp size={10} />}
+{weeksOfStock === Infinity ? 'Sem Vendas' : `${weeksOfStock.toFixed(1)} sem.`}
+</span>
+</td>
+<td className="px-6 py-4 text-right">
+<button
+onClick={() => removeProduct(p.id)}
+className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+>
+<Trash2 className="w-4 h-4" />
+</button>
+</td>
+</tr>
+);
+})}
+</tbody>
+</table>
+</div>
+</div>
+)}
+</div>
+{/* Sidebar Form */}
+<aside className="space-y-4">
+<div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+<div className="flex items-center gap-2">
+<Plus className="w-4 h-4 text-indigo-600" />
+<h2 className="font-semibold text-slate-800 text-sm">Adicionar Produto</h2>
+</div>
+<form onSubmit={handleAddField} className="space-y-4">
+<div className="space-y-1.5">
+<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nome do Produto</label>
+<input
+type="text"
+required
+value={formData.name}
+onChange={(e) => setFormData({...formData, name: e.target.value})}
+placeholder="Ex: Cimento CP-II"
+className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+/>
+</div>
+<div className="grid grid-cols-2 gap-3">
+<div className="space-y-1.5">
+<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Preço Compra</label>
+<div className="relative">
+<DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+<input
+type="number"
+required
+min="0"
+step="0.01"
+value={formData.purchasePrice}
+onChange={(e) => setFormData({...formData, purchasePrice: e.target.value})}
+placeholder="0.00"
+className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+/>
+</div>
+</div>
+<div className="space-y-1.5">
+<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Preço Venda</label>
+<div className="relative">
+<DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+<input
+type="number"
+required
+min="0"
+step="0.01"
+value={formData.sellingPrice}
+onChange={(e) => setFormData({...formData, sellingPrice: e.target.value})}
+placeholder="0.00"
+className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+/>
+</div>
+</div>
+</div>
+<div className="grid grid-cols-2 gap-3">
+<div className="space-y-1.5">
+<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Qtd Estoque</label>
+<input
+type="number"
+required
+min="0"
+value={formData.stock}
+onChange={(e) => setFormData({...formData, stock: e.target.value})}
+placeholder="0"
+className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+/>
+</div>
+<div className="space-y-1.5">
+<label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Média Vendas/Sem</label>
+<input
+type="number"
+required
+min="0"
+value={formData.weeklySales}
+onChange={(e) => setFormData({...formData, weeklySales: e.target.value})}
+placeholder="0"
+className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+/>
+</div>
+</div>
+<button
+type="submit"
+className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+>
+<Plus className="w-4 h-4" />
+Adicionar ao Painel
+</button>
+</form>
+</div>
+<div className="bg-slate-900 p-6 rounded-2xl text-white shadow-xl shadow-indigo-100 overflow-hidden relative">
+<div className="relative z-10 space-y-4">
+<div className="flex items-center gap-2">
+<DollarSign className="w-4 h-4 text-indigo-400" />
+<h3 className="text-xs font-bold uppercase tracking-widest text-indigo-300">Capital Travado</h3>
+</div>
+<div>
+<p className="text-3xl font-bold tracking-tight">
+R$ {analysis ? analysis.trappedMoney.toFixed(2) : '0,00'}
+</p>
+<p className="text-[10px] text-slate-400 mt-1">Este dinheiro poderia estar rendendo ou sendo reinvestido.</p>
+</div>
+</div>
+{/* Decorative circle */}
+<div className="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl" />
+</div>
+</aside>
+</div>
+{/* Footer */}
+<footer className="pt-8 border-t border-slate-200">
+<div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
+<p>© 2026 Gestão de Estoque Inteligente</p>
+<div className="flex items-center gap-4">
+<p>Simples • Direto • Lucrativo</p>
+</div>
+</div>
+</footer>
+</div>
+</div>
+);
+}
+--- FIM ARQUIVO: src/App.tsx ---
+
+--- INICIO ARQUIVO: src/main.tsx ---
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+createRoot(document.getElementById('root')!).render(
+<StrictMode>
+<App />
+</StrictMode>,
+);
+--- FIM ARQUIVO: src/main.tsx ---
+
+--- INICIO ARQUIVO: src/index.css ---
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@theme {
+--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+--font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+--- FIM ARQUIVO: src/index.css ---
+
