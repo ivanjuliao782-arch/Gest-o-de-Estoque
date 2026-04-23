@@ -240,9 +240,14 @@ export default function App() {
         sentences.push(`${worstProduct.name} está com um giro saudável.`);
       }
     } else {
-      sentences.push(`${worstProduct.name} está travando seu capital com baixo giro.`);
+      if (isWorstLowTurnover) {
+        sentences.push(`${worstProduct.name} está travando seu capital com baixo giro.`);
+      } else {
+        sentences.push(`O item com giro mais lento no momento é ${worstProduct.name}, mas o giro geral está saudável.`);
+      }
+
       if (isBestHighTurnover) {
-        sentences.push(`O produto ${bestProduct.name} está vendendo bem e merece atenção no estoque.`);
+        sentences.push(`Já o produto ${bestProduct.name} está voando em vendas e merece atenção redobrada no estoque.`);
       }
     }
 
@@ -284,13 +289,12 @@ export default function App() {
           {/* Main Content */}
           <div className="space-y-6 md:space-y-8 order-2 md:order-1">
             {/* Analysis Summary */}
-            <AnimatePresence mode="wait">
+            <div className="relative">
               {loading ? (
                 <motion.div
                   key="loading"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
                   className="bg-slate-900/40 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/5 shadow-2xl flex flex-col items-center justify-center gap-4"
                 >
                   <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
@@ -301,7 +305,6 @@ export default function App() {
                   key="analysis"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
                   className="bg-slate-900/40 backdrop-blur-xl p-5 md:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-5"
                 >
                   <div className="flex items-center justify-between">
@@ -343,7 +346,6 @@ export default function App() {
                   key="empty"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
                   className="bg-slate-900/20 border-2 border-dashed border-white/5 rounded-3xl p-10 md:p-16 text-center space-y-4"
                 >
                   <div className="mx-auto w-12 h-12 md:w-14 md:h-14 bg-slate-800/50 rounded-2xl flex items-center justify-center">
@@ -355,7 +357,7 @@ export default function App() {
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
+            </div>
 
             {/* List Table */}
             {!loading && products.length > 0 && (
