@@ -50,6 +50,28 @@ export default function App() {
   // Fetch products from Supabase
   useEffect(() => {
     fetchProducts();
+
+    // Realtime subscription — atualiza automaticamente quando qualquer mudança ocorre
+    const channel = supabase
+      .channel(`products-realtime-${storeId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products',
+          filter: `store_id=eq.${storeId}`
+        },
+        () => {
+          // Recarrega todos os produtos quando qualquer mudança ocorrer
+          fetchProducts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [storeId]);
 
   async function fetchProducts() {
