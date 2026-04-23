@@ -347,7 +347,11 @@ export default function App() {
                           '',
                           '_Gerado por Analista de Estoque Pro_'
                         ].filter(Boolean).join('\n');
-                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                        const url = isMobile 
+                          ? `whatsapp://send?text=${encodeURIComponent(msg)}`
+                          : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+                        window.open(url, isMobile ? '_self' : '_blank');
                       }}
                       className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 hover:border-green-500/40 text-green-400 font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all active:scale-95"
                     >
