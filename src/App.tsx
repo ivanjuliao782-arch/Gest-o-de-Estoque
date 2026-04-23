@@ -15,7 +15,10 @@ import {
   PieChart,
   Loader2,
   Search,
-  X
+  X,
+  MessageCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 
@@ -26,6 +29,43 @@ interface Product {
   sellingPrice: number;
   stock: number;
   weeklySales: number;
+}
+
+interface AnalysisData {
+  trappedMoney: number;
+  worstProduct: Product;
+  bestProduct: Product | null;
+  isWorstLowTurnover: boolean;
+  isBestHighTurnover: boolean;
+  sentences: string[];
+}
+
+function CopyButton({ analysis }: { analysis: AnalysisData }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    const msg = [
+      '📊 DIAGNÓSTICO ESTRATÉGICO DO ESTOQUE',
+      '',
+      ...analysis.sentences,
+      '',
+      analysis.isWorstLowTurnover ? `⚠️ Ação Imediata: Promover ${analysis.worstProduct.name} para liberar caixa.` : '',
+      analysis.bestProduct && analysis.isBestHighTurnover ? `✅ Oportunidade: Escalar estoque de ${analysis.bestProduct.name}.` : '',
+      '',
+      'Gerado por Analista de Estoque Pro'
+    ].filter(Boolean).join('\n');
+    navigator.clipboard.writeText(msg).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all active:scale-95"
+    >
+      {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+    </button>
+  );
 }
 
 export default function App() {
@@ -291,6 +331,30 @@ export default function App() {
                         <p className="text-xs md:text-sm text-emerald-200/80">Escalar estoque de {analysis.bestProduct.name}.</p>
                       </div>
                     )}
+                  </div>
+
+                  {/* Share Strategy Buttons */}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => {
+                        const msg = [
+                          '📊 *DIAGNÓSTICO ESTRATÉGICO DO ESTOQUE*',
+                          '',
+                          ...analysis.sentences,
+                          '',
+                          analysis.isWorstLowTurnover ? `⚠️ *Ação Imediata:* Promover ${analysis.worstProduct.name} para liberar caixa.` : '',
+                          analysis.bestProduct && analysis.isBestHighTurnover ? `✅ *Oportunidade:* Escalar estoque de ${analysis.bestProduct.name}.` : '',
+                          '',
+                          '_Gerado por Analista de Estoque Pro_'
+                        ].filter(Boolean).join('\n');
+                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 hover:border-green-500/40 text-green-400 font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all active:scale-95"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Enviar pelo WhatsApp
+                    </button>
+                    <CopyButton analysis={analysis} />
                   </div>
                 </motion.div>
               ) : (
