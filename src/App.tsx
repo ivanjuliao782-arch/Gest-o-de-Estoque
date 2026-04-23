@@ -349,7 +349,7 @@ export default function App() {
                         ].filter(Boolean).join('\n');
                         // Substitua o número abaixo pelo seu (com 55, DDD e número)
                         // Exemplo: '5511988887777'
-                        const agentNumber = '5511999999999'; 
+                        const agentNumber = '553298519097'; 
                         
                         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                         const url = isMobile 
