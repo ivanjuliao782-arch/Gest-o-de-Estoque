@@ -16,7 +16,6 @@ import {
   Loader2,
   Search,
   X,
-  MessageCircle,
   Copy,
   Check
 } from 'lucide-react';
@@ -61,9 +60,10 @@ function CopyButton({ analysis }: { analysis: AnalysisData }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all active:scale-95"
+      className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all active:scale-95"
     >
       {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+      {copied ? 'Copiado!' : 'Copiar Estratégia'}
     </button>
   );
 }
@@ -335,33 +335,6 @@ export default function App() {
 
                   {/* Share Strategy Buttons */}
                   <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={() => {
-                        const msg = [
-                          '📊 *DIAGNÓSTICO ESTRATÉGICO DO ESTOQUE*',
-                          '',
-                          ...analysis.sentences,
-                          '',
-                          analysis.isWorstLowTurnover ? `⚠️ *Ação Imediata:* Promover ${analysis.worstProduct.name} para liberar caixa.` : '',
-                          analysis.bestProduct && analysis.isBestHighTurnover ? `✅ *Oportunidade:* Escalar estoque de ${analysis.bestProduct.name}.` : '',
-                          '',
-                          '_Gerado por Analista de Estoque Pro_'
-                        ].filter(Boolean).join('\n');
-                        // Substitua o número abaixo pelo seu (com 55, DDD e número)
-                        // Exemplo: '5511988887777'
-                        const agentNumber = '553298519097'; 
-                        
-                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                        const url = isMobile 
-                          ? `whatsapp://send?phone=${agentNumber}&text=${encodeURIComponent(msg)}`
-                          : `https://api.whatsapp.com/send?phone=${agentNumber}&text=${encodeURIComponent(msg)}`;
-                        window.open(url, isMobile ? '_self' : '_blank');
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 hover:border-green-500/40 text-green-400 font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all active:scale-95"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      Enviar pelo WhatsApp
-                    </button>
                     <CopyButton analysis={analysis} />
                   </div>
                 </motion.div>
